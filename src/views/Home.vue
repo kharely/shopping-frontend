@@ -1,53 +1,61 @@
 <template>
   <div class="row justify-content-center">
     <div class="col-10 mt-md-5 ">
-      <div class="row justify-content-center">
-        <div class="col">
-          <table class="table">
-            <thead class="table-success">
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Price</th>
-                <th scope="col-1"></th>
+      <form @submit.prevent="getCost">
+        <div class="row justify-content-center">
+          <div class="col-12">
+          <h3 class="text-dark">List of Products</h3>
+            <table class="table table-dark">
+              <thead class="bg-success">
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Price</th>
+                  <th scope="col-1"></th>
+                </tr>
+              </thead>
+              <tbody>
+              <tr v-for="item in items" v-bind:key="item.CODE">
+                <th scope=row>{{item.NAME}}</th>
+                <th>{{item.PRICE }} €</th>
+                <th><button class="btn btn-success mr-3" @click="increment(item.CODE)">
+                  <i class="fas fa-plus-circle"></i>
+                </button>
+                <button class="btn btn-success" @click="decrement(item.CODE)">
+                  <i class="fas fa-minus-circle"></i>
+                </button>
+                </th>
               </tr>
-            </thead>
-            <tbody>
-            <tr v-for="item in items" v-bind:key="item.CODE">
-              <th scope=row>{{item.NAME}}</th>
-              <th>$ {{item.PRICE}}</th>
-              <th><button class="btn btn-success mr-1" @click="increment">
-                <i class="fas fa-plus-circle"></i>
-              </button>
-              <button class="btn btn-success" @click="decrement(item.CODE)">
-                <i class="fas fa-minus-circle"></i>
-              </button>
-              </th>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <button class="btn btn-primary">Enviar</button>
-      <div class="row justify-content-center">
-        <div class="col-12 col-md-5">
-          <h3>Items</h3>
-          <div class="row">
-            <p>{{shopping}}</p>
+              </tbody>
+            </table>
           </div>
         </div>
-        <div class="col-12 col-md-5">
-          <h3>Checkout</h3>
-          <table class="table">
-            <thead class="table-success">
+      </form>
+      <div class="row justify-content-center mt-4">
+        <div class="col-12 col-md-6">
+          <h3 class="text-dark">Items</h3>
+          <div class="row">
+            <p class="text-monospace col-12">Cantidad de Pants: {{shopping.pants}}</p>
+            <p class="text-monospace col-12">Cantidad de T-shirt: {{shopping.tshirt}}</p>
+            <p class="text-monospace col-12">Cantidad de Hat: {{shopping.hat}}</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <h3 class="text-dark">Checkout</h3>
+          <table class="table table-dark">
+            <thead class="bg-success">
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Price</th>
               </tr>
             </thead>
-            <tbody>
-            <tr v-for="item in items" v-bind:key="item.CODE">
-              <th scope=row>{{item.NAME}}</th>
-              <th>$ {{item.PRICE }}</th>
+            <tbody class="text-capitalize">
+            <tr v-for="(value, key) in totals" v-bind:key="key">
+                <th v-if="key != 'total'" scope=row>{{key}}</th>
+                <th v-if="key != 'total'">{{ value }}€</th>
+            </tr>
+            <tr>
+              <th scope=row>TOTAL</th>
+              <th>{{totals.total}}€</th>
             </tr>
             </tbody>
           </table>
@@ -67,9 +75,10 @@ export default {
     items: [],
     shopping: {
       pants: 0,
-      hat: 0,
       tshirt: 0,
+      hat: 0,
     },
+    totals: [],
   }),
 
   mounted() {
@@ -81,14 +90,28 @@ export default {
   },
 
   methods: {
-    increment(name) {
-      this.shopping[name.toLowerCase()] += 1;
+    increment(code) {
+      this.shopping[code.toLowerCase()] += 1;
     },
-    decrement(name) {
-      const nameLower = name.toLowerCase();
-      if (this.shopping[nameLower].counter > 0) {
-        this.shopping[nameLower] -= 1;
+    decrement(code) {
+      if (this.shopping[code.toLowerCase()] > 0) {
+        this.shopping[code.toLowerCase()] -= 1;
       }
+    },
+    getCost() {
+      fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(this.shopping),
+        headers: {
+          'content-type': 'application/json',
+        },
+      })
+        .then(response => response.json())
+        .then((result) => {
+          if (!result.details) {
+            this.totals = result;
+          }
+        });
     },
   },
 };
